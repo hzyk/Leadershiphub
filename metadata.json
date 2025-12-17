@@ -1,0 +1,8 @@
+{
+  "name": "MemberHub - Leadership & Learning Platform",
+  "description": "A modern, multi-tiered membership platform for organizational learning, leadership management, and structured course progression with integrated AI assistance.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
