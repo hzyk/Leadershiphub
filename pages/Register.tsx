@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Mail, User, Lock, Loader2 } from 'lucide-react';
+import { Mail, User, Lock, Loader2 } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');
@@ -24,8 +25,8 @@ const Register: React.FC = () => {
     <div className="max-w-md mx-auto py-12">
       <div className="bg-slate-900 border border-slate-800 p-10 rounded-3xl shadow-2xl">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-indigo-600/10 text-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <UserPlus size={32} />
+          <div className="mb-4 flex justify-center">
+            <Logo size={64} className="drop-shadow-lg shadow-indigo-500/20" />
           </div>
           <h1 className="text-3xl font-bold">Create Account</h1>
           <p className="text-slate-500">Join our organization today as a Basic Member</p>

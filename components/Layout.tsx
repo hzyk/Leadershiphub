@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { WHATSAPP_NUMBER } from '../constants';
+import Logo from './Logo';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
@@ -45,8 +46,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-black bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
-                MEMBERHUB
+              <Link to="/" className="flex items-center gap-2 group">
+                <Logo className="group-hover:rotate-12 transition-transform duration-300" size={32} />
+                <span className="text-2xl font-black bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+                  MEMBERHUB
+                </span>
               </Link>
             </div>
 
@@ -154,7 +158,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <footer className="bg-slate-950 border-t border-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-xl font-bold text-white mb-4">MemberHub</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <Logo size={24} />
+              <h3 className="text-xl font-bold text-white">MemberHub</h3>
+            </div>
             <p className="text-slate-500 text-sm max-w-xs">
               Empowering individuals and leaders through structured learning, membership growth, and collaborative tools.
             </p>
