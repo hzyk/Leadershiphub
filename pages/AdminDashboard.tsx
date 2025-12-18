@@ -1,12 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Users, 
   BookOpen, 
   ArrowUpCircle, 
   TrendingUp,
   Activity,
-  UserCheck
+  UserCheck,
+  Check,
+  X,
+  BellPlus,
+  Send
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -19,6 +23,8 @@ import {
   AreaChart, 
   Area 
 } from 'recharts';
+import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const data = [
   { name: 'Mon', users: 400, courses: 240 },
@@ -31,24 +37,73 @@ const data = [
 ];
 
 const AdminDashboard: React.FC = () => {
+  const { requests, resolveUpgradeRequest, addAnnouncement } = useAuth();
+  const [activeTab, setActiveTab] = useState<'analytics' | 'requests' | 'announcements'>('analytics');
+  
+  // Announcement Form State
+  const [annTitle, setAnnTitle] = useState('');
+  const [annContent, setAnnContent] = useState('');
+  const [annPriority, setAnnPriority] = useState<'low' | 'medium' | 'high'>('medium');
+
+  const pendingRequests = requests.filter(r => r.status === 'PENDING');
+
   const stats = [
     { label: 'Total Members', value: '1,284', icon: Users, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { label: 'Active Courses', value: '24', icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-    { label: 'Upgrade Requests', value: '12', icon: ArrowUpCircle, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    { label: 'Pending Upgrades', value: pendingRequests.length.toString(), icon: ArrowUpCircle, color: 'text-amber-400', bg: 'bg-amber-400/10' },
     { label: 'Daily Activity', value: '+14%', icon: Activity, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
   ];
 
+  const handleCreateAnnouncement = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!annTitle.trim() || !annContent.trim()) return;
+    addAnnouncement({ title: annTitle, content: annContent, priority: annPriority });
+    setAnnTitle('');
+    setAnnContent('');
+    alert("Announcement broadcast successfully!");
+  };
+
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold">Admin Center</h1>
-        <p className="text-slate-400">Overview of organizational growth and performance.</p>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold">Admin Command Center</h1>
+          <p className="text-slate-400 mt-1">Full control over organizational membership and growth analytics.</p>
+        </div>
+        <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <button 
+            onClick={() => setActiveTab('analytics')}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'analytics' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            Analytics
+          </button>
+          <button 
+            onClick={() => setActiveTab('requests')}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            Requests
+            {pendingRequests.length > 0 && (
+              <span className="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.5 rounded-full">
+                {pendingRequests.length}
+              </span>
+            )}
+          </button>
+          <button 
+            onClick={() => setActiveTab('announcements')}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'announcements' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            Broadcast
+          </button>
+        </div>
       </header>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((s) => (
-          <div key={s.label} className="p-6 bg-slate-900 border border-slate-800 rounded-2xl">
+          <div key={s.label} className="p-6 bg-slate-900 border border-slate-800 rounded-2xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-2 opacity-5">
+              <s.icon size={64} />
+            </div>
             <div className={`p-3 ${s.bg} ${s.color} w-fit rounded-xl mb-4`}>
               <s.icon size={24} />
             </div>
@@ -58,53 +113,210 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Engagement Chart */}
-        <div className="p-8 bg-slate-900 border border-slate-800 rounded-3xl h-[400px]">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-            <TrendingUp size={20} className="text-indigo-400" />
-            User Engagement
-          </h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                itemStyle={{ color: '#f8fafc' }}
-              />
-              <Area type="monotone" dataKey="users" stroke="#6366f1" fillOpacity={1} fill="url(#colorUsers)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      <AnimatePresence mode="wait">
+        {activeTab === 'analytics' && (
+          <motion.div 
+            key="analytics"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          >
+            <div className="p-8 bg-slate-900 border border-slate-800 rounded-3xl h-[400px]">
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <TrendingUp size={20} className="text-indigo-400" />
+                User Engagement Trends
+              </h3>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                    itemStyle={{ color: '#f8fafc' }}
+                  />
+                  <Area type="monotone" dataKey="users" stroke="#6366f1" fillOpacity={1} fill="url(#colorUsers)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-        {/* Course Completion Chart */}
-        <div className="p-8 bg-slate-900 border border-slate-800 rounded-3xl h-[400px]">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-            <UserCheck size={20} className="text-emerald-400" />
-            Course Progress
-          </h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                itemStyle={{ color: '#f8fafc' }}
-              />
-              <Bar dataKey="courses" fill="#10b981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+            <div className="p-8 bg-slate-900 border border-slate-800 rounded-3xl h-[400px]">
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <UserCheck size={20} className="text-emerald-400" />
+                Monthly Completion Rates
+              </h3>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                    itemStyle={{ color: '#f8fafc' }}
+                  />
+                  <Bar dataKey="courses" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'requests' && (
+          <motion.div 
+            key="requests"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden"
+          >
+            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-bold">Membership Upgrade Requests</h3>
+              <span className="text-sm text-slate-500">{pendingRequests.length} pending review</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-slate-500 text-sm bg-slate-950/50">
+                    <th className="px-6 py-4 font-semibold uppercase tracking-wider">Member</th>
+                    <th className="px-6 py-4 font-semibold uppercase tracking-wider">Target Role</th>
+                    <th className="px-6 py-4 font-semibold uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 font-semibold uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 font-semibold uppercase tracking-wider text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {requests.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                        No upgrade requests found.
+                      </td>
+                    </tr>
+                  ) : (
+                    requests.map((req) => (
+                      <tr key={req.id} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req.userName}`} 
+                              alt="" 
+                              className="w-8 h-8 rounded-full bg-slate-800" 
+                            />
+                            <div>
+                              <div className="font-bold">{req.userName}</div>
+                              <div className="text-xs text-slate-500">Current: {req.currentRole}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${req.requestedRole === 'LEADERSHIP' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/20'}`}>
+                            {req.requestedRole}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-medium ${req.status === 'PENDING' ? 'text-amber-400' : req.status === 'APPROVED' ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {req.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {req.date}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {req.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={() => resolveUpgradeRequest(req.id, 'APPROVED')}
+                                className="p-2 text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors border border-transparent hover:border-emerald-400/20"
+                                title="Approve"
+                              >
+                                <Check size={18} />
+                              </button>
+                              <button 
+                                onClick={() => resolveUpgradeRequest(req.id, 'REJECTED')}
+                                className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
+                                title="Reject"
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-600 font-bold uppercase">Archived</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'announcements' && (
+          <motion.div 
+            key="announcements"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="max-w-2xl mx-auto"
+          >
+            <div className="p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl">
+              <div className="flex items-center gap-3 mb-8 text-indigo-400">
+                <BellPlus size={24} />
+                <h3 className="text-xl font-bold">New Organization Broadcast</h3>
+              </div>
+              <form onSubmit={handleCreateAnnouncement} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Announcement Title</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={annTitle}
+                    onChange={(e) => setAnnTitle(e.target.value)}
+                    placeholder="e.g. Quarterly Review Dates"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Priority Level</label>
+                  <select 
+                    value={annPriority}
+                    onChange={(e) => setAnnPriority(e.target.value as any)}
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 appearance-none"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority (Urgent)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Content</label>
+                  <textarea 
+                    required
+                    value={annContent}
+                    onChange={(e) => setAnnContent(e.target.value)}
+                    placeholder="Type your message to all members..."
+                    className="w-full h-40 p-4 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-sm resize-none transition-all"
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-500/20 flex items-center justify-center gap-2"
+                >
+                  <Send size={18} />
+                  Send Broadcast
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
