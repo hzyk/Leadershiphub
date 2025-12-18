@@ -54,23 +54,6 @@ const About: React.FC = () => {
           </div>
         </div>
       </section>
-
-      <section>
-        <h2 className="text-3xl font-bold mb-12 text-center">Our Leadership</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="text-center">
-              <img 
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=leader${i}`} 
-                alt="Leader" 
-                className="w-32 h-32 rounded-full mx-auto mb-4 bg-slate-800 border-4 border-slate-900 shadow-xl"
-              />
-              <h4 className="font-bold">Executive Member {i}</h4>
-              <p className="text-sm text-indigo-400">Board of Directors</p>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 };

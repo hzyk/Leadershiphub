@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Courses from './pages/Courses';
+import CourseDetails from './pages/CourseDetails';
 import Lesson from './pages/Lesson';
 import Upgrade from './pages/Upgrade';
 import AdminDashboard from './pages/AdminDashboard';
@@ -49,6 +50,11 @@ const AppContent: React.FC = () => {
         <Route path="/courses" element={
           <ProtectedRoute>
             <Courses />
+          </ProtectedRoute>
+        } />
+        <Route path="/courses/:courseId" element={
+          <ProtectedRoute>
+            <CourseDetails />
           </ProtectedRoute>
         } />
         <Route path="/courses/:courseId/lessons/:lessonId" element={

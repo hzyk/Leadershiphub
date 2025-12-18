@@ -5,6 +5,7 @@ import { MOCK_ANNOUNCEMENTS } from '../constants';
 
 interface AuthContextType {
   user: User | null;
+  users: User[]; // Simulated user database
   requests: UpgradeRequest[];
   announcements: Announcement[];
   completedLessons: string[];
@@ -12,6 +13,7 @@ interface AuthContextType {
   register: (name: string, email: string) => Promise<void>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
+  deleteUser: (userId: string) => void;
   submitUpgradeRequest: (requestedRole: UserRole) => void;
   resolveUpgradeRequest: (requestId: string, status: 'APPROVED' | 'REJECTED') => void;
   addAnnouncement: (announcement: Omit<Announcement, 'id' | 'date'>) => void;
@@ -20,8 +22,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Initial mock users for admin view
+const INITIAL_USERS: User[] = [
+  { id: 'u1', name: 'Alice Admin', email: 'admin@memberhub.com', role: UserRole.LEADERSHIP, joinDate: '2023-01-15', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice' },
+  { id: 'u2', name: 'Bob Basic', email: 'bob@example.com', role: UserRole.BASIC, joinDate: '2023-06-20', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob' },
+  { id: 'u3', name: 'Charlie Full', email: 'charlie@example.com', role: UserRole.FULL, joinDate: '2023-03-10', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie' },
+];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [requests, setRequests] = useState<UpgradeRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>(MOCK_ANNOUNCEMENTS);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
@@ -30,6 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUser = localStorage.getItem('mh_user');
     if (storedUser) setUser(JSON.parse(storedUser));
     
+    const storedUsers = localStorage.getItem('mh_all_users');
+    if (storedUsers) setUsers(JSON.parse(storedUsers));
+
     const storedRequests = localStorage.getItem('mh_requests');
     if (storedRequests) setRequests(JSON.parse(storedRequests));
 
@@ -39,6 +52,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedProgress = localStorage.getItem('mh_progress');
     if (storedProgress) setCompletedLessons(JSON.parse(storedProgress));
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('mh_all_users', JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
     localStorage.setItem('mh_requests', JSON.stringify(requests));
@@ -53,7 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [completedLessons]);
 
   const login = async (email: string, role: UserRole) => {
-    const mockUser: User = {
+    const existingUser = users.find(u => u.email === email);
+    const mockUser: User = existingUser || {
       id: Math.random().toString(36).substr(2, 9),
       name: email.split('@')[0],
       email: email,
@@ -61,6 +79,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       joinDate: new Date().toISOString(),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
     };
+    
+    if (!existingUser) {
+      setUsers(prev => [...prev, mockUser]);
+    }
+    
     setUser(mockUser);
     localStorage.setItem('mh_user', JSON.stringify(mockUser));
   };
@@ -74,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       joinDate: new Date().toISOString(),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
     };
+    setUsers(prev => [...prev, mockUser]);
     setUser(mockUser);
     localStorage.setItem('mh_user', JSON.stringify(mockUser));
   };
@@ -87,7 +111,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       const updated = { ...user, ...data };
       setUser(updated);
+      setUsers(prev => prev.map(u => u.id === user.id ? updated : u));
       localStorage.setItem('mh_user', JSON.stringify(updated));
+    }
+  };
+
+  const deleteUser = (userId: string) => {
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    if (user?.id === userId) {
+      logout();
     }
   };
 
@@ -108,11 +140,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resolveUpgradeRequest = (requestId: string, status: 'APPROVED' | 'REJECTED') => {
     setRequests(prev => prev.map(req => {
       if (req.id === requestId) {
-        const updated = { ...req, status };
-        if (status === 'APPROVED' && user && req.userId === user.id) {
-          updateUser({ role: req.requestedRole });
+        const updatedRequest = { ...req, status };
+        if (status === 'APPROVED') {
+          setUsers(allUsers => allUsers.map(u => 
+            u.id === req.userId ? { ...u, role: req.requestedRole } : u
+          ));
+          if (user && req.userId === user.id) {
+            updateUser({ role: req.requestedRole });
+          }
         }
-        return updated;
+        return updatedRequest;
       }
       return req;
     }));
@@ -138,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ 
       user, 
+      users,
       requests, 
       announcements,
       completedLessons,
@@ -145,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       register, 
       logout, 
       updateUser, 
+      deleteUser,
       submitUpgradeRequest, 
       resolveUpgradeRequest,
       addAnnouncement,
